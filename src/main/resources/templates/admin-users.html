@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Управление пользователями</title>
+</head>
+<body>
+<h2>Управление ролями пользователей</h2>
+<p th:if="${message}" th:text="${message}" style="color: green"></p>
+
+<table border="1" cellpadding="8">
+    <thead>
+    <tr>
+        <th>Пользователь</th>
+        <th>Текущие роли</th>
+        <th>Изменить роли</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="user : ${users}">
+        <td th:text="${user.username}"></td>
+        <td th:text="${user.roles}"></td>
+        <td>
+            <form th:action="@{'/admin/users/' + ${user.username} + '/roles'}" method="post">
+                <label>
+                    <input type="checkbox" name="roles" value="ROLE_USER" th:checked="${user.roles.contains(T(com.example.securitydemo.model.Role).ROLE_USER)}"/>
+                    USER
+                </label>
+                <label>
+                    <input type="checkbox" name="roles" value="ROLE_ADMIN" th:checked="${user.roles.contains(T(com.example.securitydemo.model.Role).ROLE_ADMIN)}"/>
+                    ADMIN
+                </label>
+                <button type="submit">Сохранить</button>
+            </form>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<p><a href="/">На главную</a></p>
+</body>
+</html>
