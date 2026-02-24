@@ -2,41 +2,249 @@
 <html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Управление пользователями</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f4f6fb;
+            --card: #ffffff;
+            --primary: #4f46e5;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --success: #10b981;
+            --danger: #ef4444;
+            --border: #e5e7eb;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+            background: linear-gradient(180deg, #eef2ff 0%, var(--bg) 40%);
+            color: var(--text);
+        }
+
+        .page {
+            max-width: 1020px;
+            margin: 0 auto;
+            padding: 24px 16px 40px;
+        }
+
+        .header {
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: clamp(1.5rem, 3vw, 2rem);
+        }
+
+        .header p {
+            color: var(--muted);
+            margin-top: 8px;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+
+        .search {
+            flex: 1;
+            min-width: 230px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--card);
+            padding: 10px 12px;
+            font-size: 15px;
+        }
+
+        .users-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 14px;
+        }
+
+        .user-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 14px;
+            box-shadow: 0 4px 16px rgba(17, 24, 39, 0.05);
+        }
+
+        .user-card h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .roles {
+            display: flex;
+            gap: 8px;
+            margin: 10px 0 14px;
+            flex-wrap: wrap;
+        }
+
+        .role-pill {
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #eef2ff;
+            color: #3730a3;
+        }
+
+        .role-controls {
+            display: grid;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .role-controls label {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .save-btn {
+            border: none;
+            background: var(--primary);
+            color: #fff;
+            padding: 9px 12px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .save-btn[disabled] {
+            opacity: .6;
+            cursor: not-allowed;
+        }
+
+        .status {
+            font-size: 13px;
+            margin-top: 9px;
+        }
+
+        .ok { color: var(--success); }
+        .error { color: var(--danger); }
+
+        .footer-link {
+            display: inline-block;
+            margin-top: 18px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
 </head>
 <body>
-<h2>Управление ролями пользователей</h2>
-<p th:if="${message}" th:text="${message}" style="color: green"></p>
+<div id="app" class="page"
+     th:attr="data-csrf-token=${_csrf.token},data-csrf-header=${_csrf.headerName}">
+    <header class="header">
+        <h1>Управление ролями пользователей</h1>
+        <p>Современная панель администратора на Vue.js для быстрого редактирования ролей.</p>
+    </header>
 
-<table border="1" cellpadding="8">
-    <thead>
-    <tr>
-        <th>Пользователь</th>
-        <th>Текущие роли</th>
-        <th>Изменить роли</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="user : ${users}">
-        <td th:text="${user.username}"></td>
-        <td th:text="${user.roles}"></td>
-        <td>
-            <form th:action="@{'/admin/users/' + ${user.username} + '/roles'}" method="post">
+    <div class="toolbar">
+        <input v-model.trim="query" class="search" type="search" placeholder="Поиск пользователя"/>
+    </div>
+
+    <section class="users-grid">
+        <article class="user-card" v-for="user in filteredUsers" :key="user.username">
+            <h3>{{ user.username }}</h3>
+            <div class="roles">
+                <span class="role-pill" v-for="role in user.roles" :key="role">{{ role }}</span>
+            </div>
+
+            <div class="role-controls">
                 <label>
-                    <input type="checkbox" name="roles" value="ROLE_USER" th:checked="${user.roles.contains(T(com.example.securitydemo.model.Role).ROLE_USER)}"/>
-                    USER
+                    <input type="checkbox" v-model="user.editRoles" value="ROLE_USER">
+                    ROLE_USER
                 </label>
                 <label>
-                    <input type="checkbox" name="roles" value="ROLE_ADMIN" th:checked="${user.roles.contains(T(com.example.securitydemo.model.Role).ROLE_ADMIN)}"/>
-                    ADMIN
+                    <input type="checkbox" v-model="user.editRoles" value="ROLE_ADMIN">
+                    ROLE_ADMIN
                 </label>
-                <button type="submit">Сохранить</button>
-            </form>
-        </td>
-    </tr>
-    </tbody>
-</table>
+            </div>
 
-<p><a href="/">На главную</a></p>
+            <button class="save-btn" :disabled="user.saving" @click="save(user)">
+                {{ user.saving ? 'Сохранение...' : 'Сохранить' }}
+            </button>
+            <p class="status" :class="user.error ? 'error' : 'ok'">{{ user.status }}</p>
+        </article>
+    </section>
+
+    <a class="footer-link" href="/">← На главную</a>
+</div>
+
+<script th:inline="javascript">
+    const initialUsers = /*[[${users}]]*/ [];
+</script>
+<script>
+    const {createApp} = Vue;
+    createApp({
+        data() {
+            const app = document.getElementById('app');
+            return {
+                query: '',
+                csrfToken: app.dataset.csrfToken,
+                csrfHeader: app.dataset.csrfHeader,
+                users: (initialUsers || []).map(u => ({
+                    username: u.username,
+                    roles: [...u.roles].sort(),
+                    editRoles: [...u.roles].sort(),
+                    saving: false,
+                    status: '',
+                    error: false
+                }))
+            };
+        },
+        computed: {
+            filteredUsers() {
+                if (!this.query) return this.users;
+                const q = this.query.toLowerCase();
+                return this.users.filter(u => u.username.toLowerCase().includes(q));
+            }
+        },
+        methods: {
+            async save(user) {
+                user.saving = true;
+                user.error = false;
+                user.status = '';
+                const roles = user.editRoles.length ? user.editRoles : ['ROLE_USER'];
+                try {
+                    const response = await fetch(`/admin/users/${encodeURIComponent(user.username)}/roles`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            [this.csrfHeader]: this.csrfToken
+                        },
+                        body: JSON.stringify({roles})
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Не удалось обновить роли');
+                    }
+
+                    user.roles = [...roles].sort();
+                    user.editRoles = [...roles].sort();
+                    user.status = `Роли обновлены: ${user.roles.join(', ')}`;
+                } catch (e) {
+                    user.error = true;
+                    user.status = e.message;
+                } finally {
+                    user.saving = false;
+                }
+            }
+        }
+    }).mount('#app');
+</script>
 </body>
 </html>

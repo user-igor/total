@@ -2,19 +2,41 @@
 <html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Главная</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <style>
+        body { font-family: Inter, system-ui, sans-serif; background: #f8fafc; margin: 0; }
+        .wrap { max-width: 760px; margin: 40px auto; padding: 0 16px; }
+        .card { background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px; }
+        h2 { margin-top: 0; }
+        .roles { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+        .role { background: #ede9fe; color: #5b21b6; border-radius: 999px; padding: 5px 10px; font-size: 13px; font-weight: 600; }
+        .actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .link { color: #4f46e5; font-weight: 600; text-decoration: none; }
+        button { background: #ef4444; color: white; border: none; border-radius: 10px; padding: 9px 12px; font-weight: 600; cursor: pointer; }
+    </style>
 </head>
 <body>
-<h2>Добро пожаловать, <span th:text="${username}"></span>!</h2>
-<p>Ваши роли:</p>
-<ul>
-    <li th:each="authority : ${authorities}" th:text="${authority}"></li>
-</ul>
+<div id="homeApp" class="wrap">
+    <section class="card">
+        <h2>Добро пожаловать, <span th:text="${username}"></span> 👋</h2>
+        <p>Ваши роли:</p>
+        <div class="roles">
+            <span class="role" th:each="authority : ${authorities}" th:text="${authority}"></span>
+        </div>
 
-<p><a href="/admin/users">Управление ролями (только для ADMIN)</a></p>
-<form method="post" th:action="@{/logout}">
-    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-    <button type="submit">Выйти</button>
-</form>
+        <div class="actions">
+            <a class="link" href="/admin/users">Управление ролями (ADMIN)</a>
+            <form method="post" th:action="@{/logout}">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <button type="submit">Выйти</button>
+            </form>
+        </div>
+    </section>
+</div>
+<script>
+    Vue.createApp({}).mount('#homeApp');
+</script>
 </body>
 </html>
